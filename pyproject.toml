@@ -1,0 +1,18 @@
+[project]
+name = "investor-agent-debater"
+version = "0.1.0"
+description = "Three-agent investment debater scaffold using Bytedance R1"
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.0.0",
+    "sqlalchemy>=2.0.0",
+    "httpx>=0.25.0",
+    "pydantic>=2.0.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio"]
+
+[project.scripts]
+debate = "src.main:main"

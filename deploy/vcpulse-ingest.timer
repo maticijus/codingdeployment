@@ -1,0 +1,10 @@
+[Unit]
+Description=VC Pulse Ingestion Timer
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 06,10,14,18,22:00:00 UTC
+OnCalendar=Sat,Sun *-*-* 12:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

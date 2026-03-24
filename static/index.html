@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VC Pulse — Threeglau</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <h1><span>VC</span> Pulse</h1>
+            <div class="header-meta">
+                <span id="last-updated">Loading...</span>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <button class="refresh-btn" onclick="refreshAll()">Refresh</button>
+            <span class="wordmark">Threeglau</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Key Stats -->
+        <section class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">Deals Tracked (30d)</div>
+                <div class="stat-value blue" id="stat-deals">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Median Round Size</div>
+                <div class="stat-value teal" id="stat-median">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Hottest Sector</div>
+                <div class="stat-value amber" id="stat-sector">—</div>
+                <div class="stat-sub" id="stat-sector-count"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Largest Round (30d)</div>
+                <div class="stat-value red" id="stat-largest">—</div>
+                <div class="stat-sub" id="stat-largest-company"></div>
+            </div>
+        </section>
+
+        <!-- Sector Heatmap -->
+        <section class="chart-section">
+            <div class="section-title">Sector Heatmap</div>
+            <div class="chart-container">
+                <canvas id="heatmap-chart"></canvas>
+            </div>
+        </section>
+
+        <!-- Top Deals Table -->
+        <section>
+            <div class="section-title">Top Deals</div>
+            <div class="table-section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Round</th>
+                            <th>Amount</th>
+                            <th>Sector</th>
+                            <th>Lead Investor(s)</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deals-tbody">
+                        <tr><td colspan="6" class="loading">Loading deals...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Trend Sparklines -->
+        <section>
+            <div class="section-title">Weekly Sector Trends</div>
+            <div class="sparklines-grid" id="sparklines-container">
+                <div class="loading">Loading trends...</div>
+            </div>
+        </section>
+
+        <!-- VC Thesis Feed -->
+        <section>
+            <div class="section-title">VC Thesis Feed</div>
+            <div class="feed-section" id="feed-container">
+                <div class="loading">Loading articles...</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        Powered by <strong>Threeglau s.r.o.</strong> &mdash;
+        Data from TechCrunch, PitchBook, CB Insights, a16z, First Round Review, Hacker News, GitHub
+    </footer>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+[Unit]
+Description=VC Pulse Data Ingestion
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/vcpulse
+ExecStart=/home/ubuntu/vcpulse/venv/bin/python /home/ubuntu/vcpulse/ingest.py

@@ -1,6 +1,6 @@
 """Use Grok (xAI) with x_search tool for real-time web context."""
 import httpx
-from config import XAI_API_KEY
+from src.config import XAI_API_KEY
 
 
 async def search_current_context(topic: str, domain_hint: str = "") -> str:
@@ -40,7 +40,6 @@ Provide factual, dated information only. No opinions. Include source names."""
             )
             if resp.status_code == 200:
                 data = resp.json()
-                # Extract text from output blocks
                 output = data.get("output", [])
                 text_parts = []
                 for block in output:

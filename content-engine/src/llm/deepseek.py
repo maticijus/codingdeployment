@@ -1,22 +1,26 @@
-"""DeepSeek R1 / V3 client for brief generation."""
+"""DeepSeek R1 / V3 shared LLM client."""
 import httpx
-from config import DEEPSEEK_API_KEY, DEFAULT_MODEL
+from src.config import DEEPSEEK_API_KEY, DEFAULT_MODEL
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 
 
-async def generate_brief(
+async def generate(
     system_prompt: str,
     user_prompt: str,
     model: str | None = None,
 ) -> str:
-    """Call DeepSeek to generate the structured brief."""
+    """
+    Call DeepSeek to generate content.
+
+    DeepSeek R1 (reasoner) doesn't accept system messages — merges into user.
+    DeepSeek V3 (chat) accepts system messages normally.
+    """
     model = model or DEFAULT_MODEL
 
     if not DEEPSEEK_API_KEY:
         raise RuntimeError("DEEPSEEK_API_KEY not set")
 
-    # DeepSeek R1 (reasoner) doesn't accept system messages — merge into user
     if model == "deepseek-reasoner":
         messages = [
             {"role": "user", "content": f"{system_prompt}\n\n---\n\n{user_prompt}"}
@@ -38,7 +42,7 @@ async def generate_brief(
                 "model": model,
                 "messages": messages,
                 "max_tokens": 8000,
-                "temperature": 0.4,  # Creative but controlled
+                "temperature": 0.4,
                 "stream": False,
             },
         )

@@ -17,5 +17,5 @@ DEFAULT_MODEL = "deepseek-reasoner"
 FALLBACK_MODEL = "deepseek-chat"
 
 # Output directory
-OUTPUT_DIR = os.path.expanduser("~/content-brief-gen/output")
+OUTPUT_DIR = os.path.expanduser("~/content-engine/output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)

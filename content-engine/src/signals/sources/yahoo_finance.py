@@ -20,7 +20,6 @@ async def get_futures_prices(symbols: list[str] | None = None) -> str:
     async with httpx.AsyncClient(timeout=15.0) as client:
         for symbol in symbols:
             try:
-                # Yahoo Finance v8 API (unofficial but reliable)
                 url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
                 params = {"range": "5d", "interval": "1d"}
                 headers = {"User-Agent": "Mozilla/5.0"}

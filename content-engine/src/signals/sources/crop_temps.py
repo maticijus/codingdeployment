@@ -1,7 +1,8 @@
 """Crop temperature thresholds and stress analysis for Sybil."""
+import re
 import httpx
 
-# Critical temperature thresholds (°C) for major crops at key growth stages
+# Critical temperature thresholds (deg C) for major crops at key growth stages
 CROP_TEMP_THRESHOLDS = {
     "corn": {
         "optimal_range": (25, 33),
@@ -41,8 +42,6 @@ CROP_TEMP_THRESHOLDS = {
     },
 }
 
-# NOAA CPC temperature outlook
-TEMP_OUTLOOK_URL = "https://www.cpc.ncep.noaa.gov/products/predictions/long_range/lead14/off14_temp.gif"
 TEMP_DISCUSSION_URL = "https://www.cpc.ncep.noaa.gov/products/predictions/long_range/fxus05.html"
 
 
@@ -78,8 +77,6 @@ async def get_temp_outlook_context() -> str:
         try:
             resp = await client.get(TEMP_DISCUSSION_URL)
             if resp.status_code == 200:
-                import re
-                # Extract the text content from the HTML
                 pre_match = re.search(r'<[Pp][Rr][Ee]>(.*?)</[Pp][Rr][Ee]>', resp.text, re.DOTALL)
                 if pre_match:
                     text = pre_match.group(1).strip()[:3000]

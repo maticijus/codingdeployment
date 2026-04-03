@@ -11,7 +11,6 @@ async def get_enso_context() -> str:
     context_parts = []
 
     async with httpx.AsyncClient(timeout=15.0) as client:
-        # Get the ENSO discussion (HTML, but text-extractable)
         try:
             resp = await client.get(ENSO_STATUS_URL)
             if resp.status_code == 200:
@@ -23,12 +22,10 @@ async def get_enso_context() -> str:
         except Exception as e:
             context_parts.append(f"[ENSO advisory fetch failed: {e}]")
 
-        # Get recent ONI values
         try:
             resp = await client.get(ENSO_DATA_URL)
             if resp.status_code == 200:
                 lines = resp.text.strip().split("\n")
-                # Last 6 entries (most recent 1.5 years)
                 recent = lines[-6:]
                 context_parts.append(f"Recent ONI values (last 6 quarters):\n" + "\n".join(recent))
         except Exception as e:

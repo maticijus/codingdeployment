@@ -1,9 +1,5 @@
-"""Pull USDA supply/demand context. Uses the free USDA NASS Quick Stats API."""
+"""Pull USDA supply/demand context via NASS Quick Stats API."""
 import httpx
-
-# USDA WASDE doesn't have a clean free API, so we scrape the latest report summary
-# and also pull key stats from NASS
-WASDE_LATEST_URL = "https://usda.library.cornell.edu/concern/publications/3t945q76s"
 
 
 async def get_usda_context(commodity: str = "corn") -> str:
@@ -11,7 +7,6 @@ async def get_usda_context(commodity: str = "corn") -> str:
     context_parts = []
 
     async with httpx.AsyncClient(timeout=15.0) as client:
-        # Quick Stats API for planted acres (free, no key needed for basic queries)
         try:
             params = {
                 "source_desc": "SURVEY",

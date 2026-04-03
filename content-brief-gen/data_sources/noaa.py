@@ -1,4 +1,5 @@
 """Pull current ENSO state and forecast from NOAA CPC."""
+import re
 import httpx
 
 ENSO_STATUS_URL = "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml"
@@ -14,10 +15,7 @@ async def get_enso_context() -> str:
         try:
             resp = await client.get(ENSO_STATUS_URL)
             if resp.status_code == 200:
-                # Extract text between <pre> tags or just grab raw text
                 text = resp.text
-                # Simple extraction — grab the advisory body
-                import re
                 pre_match = re.search(r'<[Pp][Rr][Ee]>(.*?)</[Pp][Rr][Ee]>', text, re.DOTALL)
                 if pre_match:
                     advisory = pre_match.group(1).strip()[:3000]

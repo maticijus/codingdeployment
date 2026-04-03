@@ -8,6 +8,7 @@ import os
 import re
 import sys
 from datetime import datetime
+from typing import Callable, Awaitable
 
 import click
 from rich.console import Console
@@ -17,22 +18,39 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from config import OUTPUT_DIR, DEFAULT_MODEL
 from data_sources.noaa import get_enso_context
 from data_sources.usda import get_usda_context
-from data_sources.yahoo_finance import get_futures_prices, FUTURES_MAP
+from data_sources.yahoo_finance import get_futures_prices
 from data_sources.web_search import search_current_context
+from data_sources.crop_temps import get_crop_temp_context
 from llm.deepseek import generate_brief
 from llm.prompts import build_system_prompt, build_user_prompt
 
 console = Console()
 
+
+# Registry mapping pull keys to (label, async callable)
+def _build_pull_registry(
+    topic: str, domain: str
+) -> dict[str, tuple[str, Callable[[], Awaitable[str]]]]:
+    return {
+        "enso": ("Pulling ENSO data from NOAA...", get_enso_context),
+        "usda_corn": ("Pulling USDA corn data...", lambda: get_usda_context("corn")),
+        "usda_wheat": ("Pulling USDA wheat data...", lambda: get_usda_context("wheat")),
+        "usda_soybeans": ("Pulling USDA soybean data...", lambda: get_usda_context("soybeans")),
+        "futures_crops": ("Pulling crop futures prices...", get_futures_prices),
+        "crop_temps": ("Pulling crop temperature thresholds & outlook...", get_crop_temp_context),
+        "web": ("Searching web for current context (Grok)...", lambda: search_current_context(topic, domain)),
+    }
+
+
 # Domain-specific data pull configurations
 DOMAIN_DATA_PULLS = {
     "sibyl": {
-        "description": "Crop commodity prediction (ENSO, NDVI, USDA)",
-        "pulls": ["enso", "usda_corn", "usda_wheat", "usda_soybeans", "futures_crops", "web"],
+        "description": "Sybil — global crops pricing (ENSO, USDA, futures, temp thresholds)",
+        "pulls": ["enso", "usda_corn", "usda_wheat", "usda_soybeans", "futures_crops", "crop_temps", "web"],
     },
     "alpha-engine": {
         "description": "Options flow, GEX, institutional signals",
-        "pulls": ["web"],  # Alpha Engine data is internal, web search for market context
+        "pulls": ["web"],
     },
     "argus": {
         "description": "Geopolitical risk, macro regime analysis",
@@ -50,59 +68,37 @@ DOMAIN_DATA_PULLS = {
 
 
 async def gather_context(topic: str, domain: str) -> list[str]:
-    """Pull all relevant data sources based on domain."""
+    """Pull all relevant data sources concurrently based on domain."""
     config = DOMAIN_DATA_PULLS.get(domain, DOMAIN_DATA_PULLS["general"])
     pulls = config["pulls"]
-    context_blocks = []
+    registry = _build_pull_registry(topic, domain)
+
+    # Build list of (key, label, coro) for requested pulls
+    tasks = [(key, *registry[key]) for key in pulls if key in registry]
 
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
+        task_ids = {key: progress.add_task(label, total=None) for key, label, _ in tasks}
+        results = await asyncio.gather(*(fn() for _, _, fn in tasks), return_exceptions=True)
 
-        if "enso" in pulls:
-            task = progress.add_task("Pulling ENSO data from NOAA...", total=None)
-            result = await get_enso_context()
-            context_blocks.append(result)
-            progress.update(task, completed=True)
+        context_blocks = []
+        for (key, _, _), result in zip(tasks, results):
+            progress.update(task_ids[key], completed=True)
+            if isinstance(result, Exception):
+                context_blocks.append(f"[{key} failed: {result}]")
+            else:
+                context_blocks.append(result)
 
-        if "usda_corn" in pulls:
-            task = progress.add_task("Pulling USDA corn data...", total=None)
-            result = await get_usda_context("corn")
-            context_blocks.append(result)
-            progress.update(task, completed=True)
-
-        if "usda_wheat" in pulls:
-            task = progress.add_task("Pulling USDA wheat data...", total=None)
-            result = await get_usda_context("wheat")
-            context_blocks.append(result)
-            progress.update(task, completed=True)
-
-        if "usda_soybeans" in pulls:
-            task = progress.add_task("Pulling USDA soybean data...", total=None)
-            result = await get_usda_context("soybeans")
-            context_blocks.append(result)
-            progress.update(task, completed=True)
-
-        if "futures_crops" in pulls:
-            task = progress.add_task("Pulling crop futures prices...", total=None)
-            result = await get_futures_prices()
-            context_blocks.append(result)
-            progress.update(task, completed=True)
-
-        if "web" in pulls:
-            task = progress.add_task("Searching web for current context (Grok)...", total=None)
-            result = await search_current_context(topic, domain)
-            context_blocks.append(result)
-            progress.update(task, completed=True)
-
-    # Add metadata
-    context_blocks.insert(0, f"Data gathered: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
-    context_blocks.insert(1, f"Topic: {topic}")
-    context_blocks.insert(2, f"Domain: {domain} — {config['description']}")
-
-    return context_blocks
+    # Prepend metadata
+    metadata = [
+        f"Data gathered: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}",
+        f"Topic: {topic}",
+        f"Domain: {domain} — {config['description']}",
+    ]
+    return metadata + context_blocks
 
 
 def slugify(text: str) -> str:
